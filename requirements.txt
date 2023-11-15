@@ -1,0 +1,12 @@
+flask
+fastapi
+moviepy
+uvicorn
+progressist
+pySmartDL
+starlette
+pathlib
+urllib3
+requests
+python-dotenv
+python-jose[all]
