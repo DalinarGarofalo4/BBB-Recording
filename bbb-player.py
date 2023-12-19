@@ -40,16 +40,16 @@ CURRENT_BBB_PLAYBACK_VERSION = "3.1.1"
 CURRENT_BBBINFO_VERSION = "1"
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 #env variables
-SENDER_EMAIL = os.getenv("SENDER_EMAIL")
-SENDER_PASSWORD = os.getenv("SENDER_PASSWORD")
+SENDER_EMAIL = os.getenv("EMAIL_SENDER_EMAIL")
+SENDER_PASSWORD = os.getenv("EMAIL_SENDER_PASSWORD")
 SUBJECT = os.getenv("SUBJECT")
 DOWNLOAD_SERVER =  os.getenv("DOWNLOAD_SERVER")
-SMTP_SERVER = os.getenv("SMTP_SERVER")
-SMTP_PORT = os.getenv("SMTP_PORT")
+SMTP_SERVER = os.getenv("EMAIL_SMTP_SERVER")
+SMTP_PORT = os.getenv("EMAIL_SMTP_PORT")
 BBB_SERVER = os.getenv("BBB_SERVER")
 #Security_api_keys
-SECRET_KEY = os.getenv("SECRET_KEY")  # Replace with your actual secret key
-ALGORITHM = os.getenv("ALGORITHM")
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")  # Replace with your actual secret key
+ALGORITHM = os.getenv("JWT_ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
 ###############################
 

@@ -1,0 +1,4 @@
+Faker
+httpx
+pytest
+pytest-asyncio
