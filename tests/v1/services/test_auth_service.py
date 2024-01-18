@@ -1,13 +1,18 @@
 import pytest
+from unittest.mock import patch
+
+from fastapi.security import HTTPAuthorizationCredentials
 
 from app.api.services.auth_service import AuthService
 from app.exceptions import ApiException
+from app.utils.rsa_util import encrypt
 
 
 @pytest.mark.asyncio
 async def test_verify_access_token_401():
     with pytest.raises(ApiException) as ex:
-        await auth_service.verify_access_token(token="fake_token")
+        authorization = HTTPAuthorizationCredentials(scheme='Bearer', credentials='fake_token')
+        await auth_service.verify_access_token(authorization)
 
     assert ex.value.code == 401  # pylint: disable=E1101
     assert ex.value.message == 'Unauthorized. Authorization error: Not enough segments. Could not validate credentials'
@@ -21,7 +26,8 @@ auth_service = AuthService()
 @pytest.mark.asyncio
 async def test_get_current_user_wrong_algorithm(get_token_with_algorithm_wrong):
     with pytest.raises(ApiException) as ex:
-        await auth_service.verify_access_token(token=get_token_with_algorithm_wrong)
+        authorization = HTTPAuthorizationCredentials(scheme='Bearer', credentials=get_token_with_algorithm_wrong)
+        await auth_service.verify_access_token(authorization)
 
     assert ex.value.code == 401  # pylint: disable=E1101
     assert ex.value.message == 'Unauthorized. Authorization error: The specified alg value is not allowed. ' \
@@ -31,11 +37,22 @@ async def test_get_current_user_wrong_algorithm(get_token_with_algorithm_wrong):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('x_bearer, result', [
-    ('{"user": "username_1", "token": "fake_token"}', {"user": "username_1", "token": "fake_token"})
+@pytest.mark.parametrize('x_bearer, user, token', [
+    ('{"user": "username_1", "token": "fake_token"}', 'username_1', 'fake_token'),
+    ('{"user": "user_example", "token": "vLUif4Bbvqz3s8H9RypzzSNb56U"}', 'user_example', 'vLUif4Bbvqz3s8H9RypzzSNb56U')
 ])
-async def test_parse_x_bearer(x_bearer, result):
-    assert result == await auth_service.parse_x_bearer(x_bearer)
+@patch('app.utils.rsa_util._get_public_key')
+@patch('app.utils.rsa_util._get_private_key')
+async def test_parse_x_bearer(
+    _get_private_key_mock, _get_public_key_mock,
+    x_bearer, user, token, get_fake_public_key, get_fake_private_key
+):
+    _get_private_key_mock.return_value = get_fake_private_key
+    _get_public_key_mock.return_value = get_fake_public_key
+
+    x_bearer_schema = await auth_service.parse_x_bearer(x_bearer=await encrypt(x_bearer))
+    assert x_bearer_schema.user == user
+    assert x_bearer_schema.token == token
 
 
 @pytest.mark.asyncio
@@ -49,9 +66,16 @@ async def test_parse_x_bearer(x_bearer, result):
     '{"user": ""}',
     '{"token": ""}',
 ])
-async def test_parse_x_bearer_400(x_bearer):
+@patch('app.utils.rsa_util._get_public_key')
+@patch('app.utils.rsa_util._get_private_key')
+async def test_parse_x_bearer_400(
+    _get_private_key_mock, _get_public_key_mock, x_bearer, get_fake_public_key, get_fake_private_key
+):
+    _get_private_key_mock.return_value = get_fake_private_key
+    _get_public_key_mock.return_value = get_fake_public_key
+
     with pytest.raises(ApiException) as ex:
-        await auth_service.parse_x_bearer(x_bearer)
+        await auth_service.parse_x_bearer(x_bearer=await encrypt(x_bearer))
 
     assert ex.value.code == 400  # pylint: disable=E1101
     assert ex.value.message == 'Bad Request. Incorrect X-BEARER.'

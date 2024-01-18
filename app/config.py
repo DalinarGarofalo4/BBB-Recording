@@ -2,7 +2,7 @@ import os
 import re
 from pathlib import Path
 
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 
 from app.constants import API_PREFIX, SWAGGER_DOC_PATH, OPENAPI_DOC_URL
 
@@ -22,32 +22,55 @@ def _get_version() -> str:
     return version
 
 
-class NextCloudSettings(BaseSettings):
+class EnvSettings(BaseSettings):
+    class Config:
+        env_file = '.env'
+
+
+class AppSettings(EnvSettings):
+    ENVIRONMENT_NAME: str = 'localhost'
+    NOSWORK_SITE: str = ''
+
+    class Config:
+        env_prefix = 'APP_'
+
+
+class NextCloudSettings(EnvSettings):
     API_URL: str = 'https://nextcloud.local'
     SECURE: bool = True
     WEBDAV_API: str = 'remote.php/dav'
+    DOWNLOAD_SERVER: str = ''
+    RECORDING_FOLDER: str = 'example/recording'
 
     class Config:
         env_prefix = 'NEXT_CLOUD_'
 
 
-class BBBSettings(BaseSettings):
-    SERVER: str = 'https://nextcloud.local'
+class BBBSettings(EnvSettings):
+    SERVER: str = 'nextcloud.local'
+    METADATA_FILENAME: str = 'bbb-player-metadata.json'
+    DOWNLOADED_MEETINGS_FOLDER: str = 'downloadedMeetings'
+    DOWNLOADED_FULLY_FILENAME: str = 'rec_fully_downloaded.txt'
+    DEFAULT_COMBINED_VIDEO_NAME: str = 'combine-output'
+    COMBINED_VIDEO_FORMAT: str = 'mkv'
+    INFO_VERSION: str = '1'
+    PLAYBACK_VERSION: str = '3.1.1'
 
     class Config:
         env_prefix = 'BBB_'
 
 
-class APISettings(BaseSettings):
+class APISettings(EnvSettings):
     HOST: str = 'http://127.0.0.1'
-    PORT: int = 8000
     SECURE: bool = False
+    PREFIX: str = API_PREFIX
+    ACTIVE_VERSION: str = 'v1'
 
     class Config:
         env_prefix = 'API_'
 
 
-class JWTSettings(BaseSettings):
+class JWTSettings(EnvSettings):
     AUD_NEXTCLOUD: str = 'bbb-recording'
     ISS_NEXTCLOUD: str = 'NosWork'
     DEFAULT_TTL_MINUTES: int = 60 * 24 * 30  # ~ 1 month
@@ -58,9 +81,16 @@ class JWTSettings(BaseSettings):
         env_prefix = 'JWT_'
 
 
-class EmailSettings(BaseSettings):
+class RSASettings(EnvSettings):
+    PRIVATE_KEY_PASSWORD: str = ''
+
+    class Config:
+        env_prefix = 'RSA_'
+
+
+class EmailSettings(EnvSettings):
     SMTP_SERVER: str = ''
-    SMTP_PORT: str = ''
+    SMTP_PORT: int = 587
     SENDER_EMAIL: str = ''
     SENDER_PASSWORD: str = ''
 
@@ -69,16 +99,13 @@ class EmailSettings(BaseSettings):
 
 
 class BaseConfig:
-    ENVIRONMENT_NAME: str = 'localhost'
     LOG_LEVEL: str = 'info'
     DEBUG: bool = False
 
     PROJECT_NAME: str = 'BBB Recording'
     VERSION: str = _get_version()
+    BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
-    DOWNLOAD_SERVER: str = ''
-
-    API_PREFIX: str = API_PREFIX
     SWAGGER_URL: str = f'{SWAGGER_DOC_PATH}'
     OPENAPI_URL: str = f'{OPENAPI_DOC_URL}'
     SWAGGER_PUBLIC_URL: str = f'/public{SWAGGER_DOC_PATH}'
@@ -90,7 +117,11 @@ class BaseConfig:
 
     JWT: JWTSettings = JWTSettings()
 
+    RSA: RSASettings = RSASettings()
+
     EMAIL: EmailSettings = EmailSettings()
+
+    APP: AppSettings = AppSettings()
 
 
 class DevelopmentConfig(BaseConfig):
@@ -107,4 +138,4 @@ config = dict(
     development=DevelopmentConfig,
     production=ProductionConfig,
 )
-current: BaseConfig = config[os.environ.get('ENVIRONMENT_NAME', 'development').lower()]()
+current: BaseConfig = config[os.environ.get('APP_ENVIRONMENT_NAME', 'development').lower()]()

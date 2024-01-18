@@ -4,12 +4,13 @@ from fastapi.exceptions import RequestValidationError
 from starlette.status import HTTP_400_BAD_REQUEST
 
 from app.api.v1.metadata import DESCRIPTION
-from app.api.v1.routes import recording
+from app.api.v1.routes import recording, utils
 from app.config import current
 from app.exceptions import set_exception_handlers
 
 api_router = APIRouter()
 api_router.include_router(recording.router, tags=['Recording'])
+api_router.include_router(utils.router, tags=['Utils'])
 
 # init API v1
 api_v1 = FastAPI(

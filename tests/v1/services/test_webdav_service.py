@@ -26,8 +26,11 @@ async def test_configure_webdav_client_ok():
     token = 'fake-token'
     await webdav_service.configure_webdav_client(x_bearer_schema=XBearerSchema(user=user, token=token))
 
+    api_url = current.NEXT_CLOUD.API_URL
+    web_dav = current.NEXT_CLOUD.WEBDAV_API
+
     assert webdav_service._username == user
-    assert webdav_service._base_user_url == f'{current.NEXT_CLOUD.API_URL}/{current.NEXT_CLOUD.WEBDAV_API}/files/{user}'
+    assert webdav_service._base_user_url == f'{api_url}/{web_dav}/files/{user}'
     assert webdav_service._headers == {'Authorization': f'Bearer {token}'}
 
 
@@ -103,7 +106,7 @@ async def test_get_file_200(send_request_mock):
 
 @pytest.mark.asyncio
 @patch('app.api.services.web_dav_service.WebDAVService._send_request')
-async def test_get_file_200(send_request_mock):
+async def test_get_file_404(send_request_mock):
     response = Response()
     response.status_code = 404
     send_request_mock.return_value = response
@@ -122,6 +125,7 @@ async def test_get_file_200(send_request_mock):
     assert ex.value.message == 'Not Found'
     assert ex.value.type == 'ErrorResponse'
     assert ex.value.subtype == 'file:not-found'
+
 
 @pytest.mark.asyncio
 @patch('app.api.services.web_dav_service.WebDAVService._send_request')

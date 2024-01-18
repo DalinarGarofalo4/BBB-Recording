@@ -73,10 +73,9 @@ def raise_exception(
 
 def _get_default_handler(
     status_code: int,
-    exc_class: Type[ValidationError],
     jsonable_encoder
 ) -> Callable[[Request, Any], Coroutine[Any, Any, JSONResponse]]:
-    async def validation_error_handler(request: Request, exc: exc_class) -> JSONResponse:
+    async def validation_error_handler(request: Request, exc: ValidationError) -> JSONResponse:
         return JSONResponse(
             status_code=status_code,
             content={
@@ -149,4 +148,4 @@ def set_exception_handlers(
         )
 
     for key, value in exc_for_default_handler.items():
-        app.add_exception_handler(key, _get_default_handler(value, key, jsonable_encoder))
+        app.add_exception_handler(key, _get_default_handler(value, key))

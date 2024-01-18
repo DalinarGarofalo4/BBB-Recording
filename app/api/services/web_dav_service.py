@@ -1,8 +1,9 @@
 from http.client import responses
 import os
+from typing import Tuple
 
 from enum import Enum
-from requests import request, exceptions
+from requests import exceptions, request, Response
 from starlette.status import (
     HTTP_400_BAD_REQUEST,
     HTTP_404_NOT_FOUND,
@@ -66,7 +67,7 @@ class WebDAVService:
         response = await self._send_request(webdav_request_input)
         return response.status_code
 
-    async def get_file(self, get_file_dto: WebDAVGetFileDTO) -> (str, bytes):
+    async def get_file(self, get_file_dto: WebDAVGetFileDTO) -> Tuple[str, bytes]:
         file_url = get_file_dto.file_url
         file_name = os.path.basename(file_url)
         webdav_request_input = WebDAVRequestInput(
@@ -92,8 +93,8 @@ class WebDAVService:
         return response.status_code
 
     @staticmethod
-    async def _send_request(webdav_request_input: WebDAVRequestInput):
-        response = {}
+    async def _send_request(webdav_request_input: WebDAVRequestInput) -> Response:
+        response: Response = Response()
         try:
             method = webdav_request_input.method
             url = webdav_request_input.url
@@ -111,7 +112,9 @@ class WebDAVService:
             raise_exception(ApiException(), HTTP_504_GATEWAY_TIMEOUT, msg, WEBDAV_TIMEOUT_ERROR, ex)
 
         except exceptions.HTTPError as ex:
-            status = ex.response.status_code
+            status = ex.response.status_code \
+                if ex.response is not None and hasattr(ex.response, 'status_code') else HTTP_400_BAD_REQUEST
+
             error_code = WEBDAV_CLIENT_ERROR \
                 if HTTP_400_BAD_REQUEST <= status < HTTP_500_INTERNAL_SERVER_ERROR else WEBDAV_SERVER_ERROR
             raise_exception(ApiException(), status, responses[status], error_code, ex)

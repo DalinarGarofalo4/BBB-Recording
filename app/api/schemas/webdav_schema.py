@@ -5,8 +5,8 @@ from typing import Any, Optional
 class WebDAVRequestInput(BaseModel):
     method: str
     url: str
-    headers: Optional[dict]
-    body: Optional[Any]
+    headers: Optional[dict] = None
+    body: Optional[Any] = None
 
 
 class WebDAVCreateFolderDTO(BaseModel):

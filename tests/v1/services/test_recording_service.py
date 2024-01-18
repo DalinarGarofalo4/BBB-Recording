@@ -2,10 +2,7 @@ import pytest
 from unittest.mock import patch
 from requests import Response
 
-from starlette.status import (
-    HTTP_201_CREATED,
-    HTTP_405_METHOD_NOT_ALLOWED
-)
+from starlette.status import HTTP_201_CREATED
 
 from app.api.schemas.auth_schema import XBearerSchema
 from app.api.services.recording_service import RecordingService
@@ -32,5 +29,5 @@ async def test_create_full_folder_path(send_request_mock, folder_path, result):
     ))
     recording_service = RecordingService(webdav_service=webdav_service)
 
-    path = await recording_service.create_full_folder_path(folder_path)
+    path = await recording_service._create_full_folder_path(folder_path)
     assert path == result
